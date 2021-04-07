@@ -8,6 +8,9 @@ To run, invoke
 
 # Filestructure
 functions.py - contains class definitions for SetFunction, Connectivity, Polymatroid.
+
 modularcut.py - contains class definition for ModularCut, functions for using modular cuts.
+
 helper.py - Helper functions. Currently only contains the function powerset.
+
 main.py - Entrypoint to the program. Run this.
