@@ -1,0 +1,291 @@
+from itertools import combinations, product
+from helper import powerset
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Class definitions for SetFunction, Connectivity, Polymatroid
+
+# Submodular, Normal set function
+class SetFunction:
+    # Constructor from dictionary and ground set
+    def __init__(self, mapping, groundset):
+        self.groundset = frozenset(groundset)
+        self.subsets = [frozenset(s) for s in powerset(groundset)]
+        self.pairs = combinations(self.subsets, 2)
+        self.triples = combinations(self.subsets, 3)
+        self.inclusionGraph = self.inclusionRelationGraph()
+        self.mapping = mapping
+
+    def __str__(self):
+        #string = "Ground Set: \n\t" + str([s for s in self.groundset]) + "\n"
+        #string = "Function: \n"
+        graph = sorted([(k, v) for k, v in self.mapping.items()],
+                       key = lambda x: x[1])
+
+        curr = 0
+        string = "0:\t"
+        for (k, v) in graph:
+            if v > curr:
+                curr = v
+                string += "\n" + str(v) + ":\t"
+                string += str([s for s in k]) + " "
+            else:
+                string += str([s for s in k]) + " "
+        string += "\n"
+                
+        return string
+        
+    def function(self, A):
+        if not (A <= self.groundset):
+            raise Exception(str(A) + " isn't in " + str(self.groundset))
+        return self.mapping[frozenset(A)]
+
+    def isNormal(self):
+        for A in self.subsets:
+            if self.function(A) < 0:
+                return False
+        return True
+    
+    def isSubmodular(self):
+        triples = combinations(self.subsets, 3)
+        E = groundset
+        for (A, B, C) in triples:
+            LHS = self.function(A) + self.function(B) + self.function(B)
+            RHS = self.function(A&(E-B)&(E-C)) + \
+                self.function((E-A)&B&(E-C)) + \
+                self.function((E-A)&(E-B)&C)
+            if LHS < RHS:
+                return False
+        return True
+
+    def isValid(self):
+        return self.isNormal() and self.isSubmodular
+
+    def inclusionRelationGraph(self):
+        G = nx.DiGraph()
+        # Encode the inclusion relation of the subsets
+        for v in self.groundset:
+            for s in self.subsets:
+                if v in s and len(s) != 1:
+                    G.add_edge(frozenset([v]), s)
+                    G.add_edge(s, frozenset([v]))
+        return G
+
+# A connectivity function consists of a finite ground set and a function from
+# the power set of the ground set to the positive integers. The function is
+# normal, symmetric and submodular.
+class Connectivity(SetFunction):
+    # Takes a dictionary mapping and a set ground
+    def __init__(self, mapping, groundset):
+        super().__init__(mapping, groundset)
+        self.graph = self.connectivityGraph()
+
+    @classmethod
+    def from_poly(cls, polymatroid):
+        conn = cls.__new__(cls)
+        connMapping = {}
+        for sub in polymatroid.subsets:
+            connMapping[sub] = polymatroid.function(sub) - len(sub)
+        super(cls, conn).__init__(connMapping, polymatroid.groundset)
+        conn.graph = conn.connectivityGraph()
+        return conn
+
+    # Check that the connectivity function is symmetric, valid
+    def isSymmetric(self):
+        for A in self.subsets:
+            if self.function(A) != self.function(self.groundset - A):
+                return False
+        return True
+
+    def isValid(self):
+        return super().isValid() and self.isSymmetric()
+
+    def isUnitary(self):
+        for v in self.groundset:
+            if self.function(set([v])) != 1:
+                return False
+        return True
+
+    def isConnected(self):
+        for s in self.subsets:
+            if s != frozenset() and s != self.groundset:
+                if self.function(s) == 0:
+                    return False
+        return True
+
+    def modular(self, p0, p1):
+        return (self.function(p0) + self.function(p1) == 
+                self.function(p0 & p1) + self.function(p0 | p1))
+    
+    # Returns -1 if A is x-decreasing, 0 if A is x-neutral, 1 otherwise
+    def stability(self, A, x):
+        if not isinstance(x, frozenset):
+            if isinstance(x, set):
+                x = frozenset(x)
+            if isinstance(x, int):
+                x = frozenset([x])
+            
+        if self.function(A) > self.function(A | x): return -1
+        if self.function(A) == self.function(A | x): return 0
+        if self.function(A) < self.function(A | x): return 1
+
+    def connectivityGraph(self):
+        def getSubset(s0, s1):
+            if s0 <= s1:
+                return (s0, s1)
+            if s1 <= s0:
+                return (s1, s0)
+            
+        #G = self.inclusionGraph
+
+        G = nx.DiGraph()
+        for s in self.subsets:
+            for v in self.groundset - s:
+                if self.stability(s, frozenset([v])) == -1:
+                    G.add_edge(s, v)
+                if self.stability(s, frozenset([v])) == 0:
+                    G.add_edge(v, s)
+                    G.add_edge(s, v)
+                if self.stability(s, frozenset([v])) == 1:
+                    G.add_edge(v, s)
+
+
+        
+        # Encode the connectivity structure of the sets
+#        for s0, s1 in combinations(self.subsets, 2):
+#            if len(s0 ^ s1) == 1:
+#                e = s0 ^ s1
+#                s0, s1 = getSubset(s0, s1)
+#                if self.stability(s0, e) == -1: G.add_edge(s0, s1)
+#                if self.stability(s0, e) == 1: G.add_edge(s1, s0)
+        return G
+
+# THE unique unitary connectivity function on three elements
+THREE = Connectivity(
+    {frozenset():0, frozenset({0}):1, frozenset({1}):1,
+     frozenset({2}):1, frozenset({0,1}):1, frozenset({0,2}):1,
+     frozenset({1,2}):1, frozenset({0,1,2}):0},
+    {0,1,2}
+)
+
+# THE unique unitary connectivity function on two elements
+TWO = Connectivity(
+    {frozenset():0, frozenset([0]):1, frozenset([1]):1,
+     frozenset([0,1]):0},
+    {0,1}
+)
+
+# THE unique connectivity function on one element
+ONE = Connectivity(
+    {frozenset():0, frozenset([0]):0},
+    {0}
+)
+
+# Filters out isomorphic connectivity functions
+def filterIsomorphicConnectivities(systems):
+    reps = [systems[0]]
+    for system in systems:
+        newRep = True
+        GN = system.graph
+        for rep in reps:
+            GR = rep.graph
+            DiGM = nx.algorithms.isomorphism.DiGraphMatcher(GN, GR)
+            if DiGM.is_isomorphic():
+                newRep = False
+        if newRep:
+            reps.append(system)            
+    return reps
+
+    
+# A polymatroid is a ground set and a function rank that is increasing,
+# normalized and submodular
+class Polymatroid(SetFunction):
+    def __init__(self, mapping, groundset):
+        super().__init__(mapping, groundset)
+        self.flats = set({self.closure(A) for A in self.subsets})
+        self.nonflats = set(self.subsets) - self.flats
+        self.graph = self.flatGraph()
+
+    # Takes a connectivity function and returns a polymatroid
+    @classmethod
+    def from_conn(cls, connectivity):
+        poly = cls.__new__(cls)
+        
+        mapping = {}
+
+        for A in connectivity.subsets:
+            mapping[A] = sum([connectivity.function(frozenset([a])) for a in A]) + \
+                connectivity.function(A)
+            
+        super(cls, poly).__init__(mapping, connectivity.groundset)
+
+        poly.flats = set({poly.closure(A) for A in poly.subsets})
+        poly.nonflats = set(poly.subsets) - poly.flats
+        
+        poly.graph = poly.flatGraph()
+        return poly
+
+    def __str__(self):
+        funcString = super().__str__()
+        flatInfo = ""
+        for flat in self.flats:
+            flatInfo += "Flat: " + str(flat) + ", rank: " + \
+                str(self.function(flat)) + "\n"
+        return funcString + flatInfo
+         
+    def closure(self, A):
+        def closed(X, x):
+            return self.function(X | frozenset([x])) == self.function(X)
+
+        return frozenset({x for x in self.groundset if closed(A, x)})
+
+    def isIncreasing(self):
+        for (A, B) in self.pairs:
+            if A <= B and self.function(A) > self.function(B):
+                return False
+            if B <= A and self.function(B) > self.function(A):
+                return False
+        return True
+
+    def isValid(self):
+        return super().isValid() and self.isIncreasing()
+
+    def flatGraph(self):
+        G = nx.Graph()
+
+        for e in self.groundset:
+            G.add_node(e, color=-1)
+            
+        for f in self.flats:
+            G.add_node(f, color=self.function(f))
+
+        for e, f in product(self.groundset, self.flats):
+            if e in f:
+                G.add_edge(e, f)
+                
+        return G
+
+def colors_match(n1_attrib,n2_attrib):
+    '''returns False if either does not have a color or if the colors do not match'''
+    try:
+        return n1_attrib['color']==n2_attrib['color']
+    except KeyError:
+        return False
+    
+# Filters out isomorphic polymatroids
+def filterIsomorphicPolymatroids(polymatroids):
+    reps = [polymatroids[0]]
+    for polymatroid in polymatroids:
+        newRep = True
+        GN = polymatroid.graph
+        for rep in reps:
+            GR = rep.graph
+            GM = nx.algorithms.isomorphism.GraphMatcher(GN, GR, node_match=colors_match)
+            if GM.is_isomorphic():
+                newRep = False
+                print("found isomorphic")
+                break
+        if newRep:
+            reps.append(polymatroid)            
+    return reps
+            
