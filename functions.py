@@ -1,4 +1,4 @@
-from itertools import combinations, product
+from itertools import combinations, product, permutations
 from helper import powerset
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -50,7 +50,7 @@ class SetFunction:
     
     def isSubmodular(self):
         """True if the function is Submodular"""
-        triples = combinations(self.subsets, 3)
+        triples = product(self.subsets, 3)
         E = groundset
         for (A, B, C) in triples:
             LHS = self.function(A) + self.function(B) + self.function(B)
@@ -99,7 +99,7 @@ class Connectivity(SetFunction):
 
     def isValid(self):
         """True if the function is Normalized, Submodular and Symmetric"""
-        return super().isValid() and self.isSymmetric()
+        return (super().isValid() and self.isSymmetric())
 
     def isUnitary(self):
         """True if all singletons are assigned the value 1"""
@@ -129,6 +129,25 @@ class Connectivity(SetFunction):
         if self.function(A) == self.function(A | x): return 0
         if self.function(A) < self.function(A | x): return 1
 
+    def isomorphicTo(self, other):
+        """Uses the permutations of the ground set to check isomorphism"""
+        def relabel(perm, sub):
+            """Relabels the subset according to the permutation given"""
+            out = set()
+            for e in sub:
+                out = out | set([perm[e]])
+            return frozenset(out)                
+            
+        perms = permutations(sorted(list(self.groundset)))
+        for perm in perms:
+            iso = True
+            for sub in self.subsets:
+                if self.function(relabel(perm, sub)) != other.function(sub):
+                    iso = False
+                    break
+            if iso: return True
+        return False
+        
     def graph(self):
         """Finds the isomorphism invariant digraph for this function"""
         def getSubset(s0, s1):

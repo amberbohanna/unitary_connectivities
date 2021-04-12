@@ -79,7 +79,7 @@ if __name__ == "__main__":
 #              str(timestop - timestart))
 
         for system in nextgen:
-          if not ((system.isValid()) and system.isUnitary() and system.isConnected()):
+            if not ((system.isValid()) and system.isUnitary() and system.isConnected()):
                 print("FAIL")
 
         print("Printing " + str(len(nextgen)) + \
