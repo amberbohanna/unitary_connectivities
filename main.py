@@ -40,7 +40,9 @@ if __name__ == "__main__":
         print("Finding all elision cuts. ", end="")
 
         timestart = time.perf_counter()
-        cuts = connectedCuts(unitaryCuts(elisionCuts(listAllCuts(previousgen[0]))))
+        cuts = []
+        for system in previousgen:
+            cuts += listCuts(system)
         timestop = time.perf_counter()
         print("Found " + str(len(cuts)) + " in time " + \
               str(timestop - timestart) + ".")
@@ -78,14 +80,11 @@ if __name__ == "__main__":
 #        print("Removed " + str(origlen - newlen) + " in time " + \
 #              str(timestop - timestart))
 
-        for system in nextgen:
-          if not ((system.isValid()) and system.isUnitary() and system.isConnected()):
-                print("FAIL")
-
-        print("Printing " + str(len(nextgen)) + \
-              " Connectivity Functions:")
-        for system in nextgen:
-            print(str(system))
+        print(str(len(nextgen)))
+        # print("Printing " + str(len(nextgen)) + \
+        #       " Connectivity Functions:")
+        # for system in nextgen:
+        #     print(str(system))
 
         previousgen = nextgen
         nextgen = []

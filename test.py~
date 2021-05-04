@@ -1,0 +1,27 @@
+def modularCutTest():
+    # Test that the modular cuts look right
+    B0 = frozenset([frozenset()])
+    B1 = frozenset([frozenset([0])])
+    B2 = frozenset([frozenset([0]), frozenset([1])])
+    B3 = frozenset([frozenset([0,1])])
+
+    C0 = ModularCut(B0, THREE)
+    C1 = ModularCut(B1, THREE)
+    C2 = ModularCut(B2, THREE)
+    C3 = ModularCut(B3, THREE)
+
+    print("Bases")
+    print(str(B0))
+    print(str(B1))
+    print(str(B2))
+    print(str(B3))
+
+    print("Cuts")
+    print(str(C0))
+    print(str(C1))
+    print(str(C2))
+    print(str(C3))
+
+
+if __name__ == "__main__":
+    modularCutTest()

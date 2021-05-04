@@ -4,7 +4,7 @@ from itertools import combinations, product
 from helper import powerset
 import networkx as nx
 
-from functions import Connectivity
+from functions import *
 
 # Class for Modular Cut, holds onto info re enumeration
 class ModularCut:
@@ -16,39 +16,47 @@ class ModularCut:
         self.cut = self.populateCut()
         self.graph = self.cutGraph()
 
+    def __str__(self):
+        return str(self.cut)
+        
     def populateCut(self):
-        def iterate(basis, pairs):
+        def iterate(basis):
             cut = basis
             for b in basis:
                 if type(b) is int:
-                    b = set([b])
-                for s in self.subsets:
-                    if b <= s:
-                        cut = cut | b
-                for (p0, p1) in pairs:
+                    b = frozenset([b])
+                    
+                for e in self.groundset:
+                    cut = cut.union(set([(b.union(set([e])))]))
+                    
+                pairs = product(cut, repeat=2)
+
+                for p0, p1 in pairs:
                     if self.connectivity.modular(p0, p1):
-                        cut = cut | (p0 & p1)
+                        cut = cut.union(set([(p0.intersection(p1))]))
             return cut
 
-        pairs = combinations(self.subsets, 2)
         cut0 = self.basis
-        cut1 = iterate(cut0, pairs)
+        cut1 = iterate(cut0)
         while (cut0 != cut1):
-            cut0 = iterate(cut1, pairs)
-            cut1 = iterate(cut0, pairs)
+            cut0 = iterate(cut1)
+            cut1 = iterate(cut0)
         return cut0
 
     def isElision(self):
         for sub in self.subsets:
-            if not ((sub in self.cut) or
-                    ((self.groundset - sub) in self.cut)):
+            if (not (sub in self.cut)) and (not ((self.groundset - sub) in self.cut)):
                 return False
         return True
 
     def isUnitary(self):
+        if set() in self.cut:
+            return False
+
         for e in self.groundset:
-            if not ((self.groundset - set([e])) in self.cut):
+            if not (set([e]) in self.cut):
                 return False
+
         return True
 
     def isConnected(self):
@@ -128,11 +136,12 @@ def nonFlatsAndComplementsCut(connectivity):
         [polymatroid.groundset - n for n in polymatroid.nonflats])
     return modularCut(polymatroid.nonflats | antinonflats, connectivity)
 
-# Lists all the modular cuts that are not empty
-def listAllCuts(connectivity):
-    return [ModularCut(basis, connectivity)
-            for basis in [frozenset(s) for s in powerset(connectivity.subsets)]
-            if basis != set()]
+def listCuts(connectivity):
+    """Returns a list of all modular cuts that are nonempty"""
+    families = [frozenset(s) for s in powerset(connectivity.subsets)]
+    cuts = [ModularCut(family, connectivity) for family in families]
+    return elisionCuts(unitaryCuts(connectedCuts(cuts)))
+    return cuts
 
 def elisionCuts(cutList):
     return [cut for cut in cutList if cut.isElision()]
@@ -142,4 +151,3 @@ def unitaryCuts(cutList):
 
 def connectedCuts(cutList):
     return [cut for cut in cutList if cut.isConnected()]
-

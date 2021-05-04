@@ -1,0 +1,124 @@
+from modularcut import *
+
+groundset = frozenset([0, 1, 2])
+bases = [frozenset([frozenset()]), frozenset([frozenset([0])]), frozenset([frozenset([0]), frozenset([1])]),
+         frozenset([frozenset([0,1])])]
+cuts = [ModularCut(bases[0], THREE), ModularCut(bases[1], THREE), ModularCut(bases[2], THREE),
+        ModularCut(bases[3], THREE)]
+functions = [
+    Connectivity({frozenset()                 : 0,
+                  frozenset({0})              : 1,
+                  frozenset({1})              : 1,
+                  frozenset({2})              : 1,
+                  frozenset({3})              : 0,
+                  frozenset({0, 1})           : 1,
+                  frozenset({0, 2})           : 1,
+                  frozenset({0, 3})           : 1,
+                  frozenset({1, 2})           : 1,
+                  frozenset({1, 3})           : 1,
+                  frozenset({2, 3})           : 1,
+                  frozenset({0, 1, 2})        : 0,
+                  frozenset({0, 1, 3})        : 1,
+                  frozenset({0, 2, 3})        : 1,
+                  frozenset({1, 2, 3})        : 1,
+                  frozenset({0, 1, 2, 3})     : 0},
+                 frozenset({0, 1, 2, 3})),
+    Connectivity({frozenset()                 : 0,
+                  frozenset({0})              : 2,
+                  frozenset({1})              : 1,
+                  frozenset({2})              : 1,
+                  frozenset({3})              : 1,
+                  frozenset({0, 1})           : 2,
+                  frozenset({0, 2})           : 2,
+                  frozenset({0, 3})           : 1,
+                  frozenset({1, 2})           : 1,
+                  frozenset({1, 3})           : 2,
+                  frozenset({2, 3})           : 2,
+                  frozenset({0, 1, 2})        : 1,
+                  frozenset({0, 1, 3})        : 1,
+                  frozenset({0, 2, 3})        : 1,
+                  frozenset({1, 2, 3})        : 2,
+                  frozenset({0, 1, 2, 3})     : 0},
+                 frozenset({0, 1, 2, 3})),
+    Connectivity({frozenset()                 : 0,
+                  frozenset({0})              : 1,
+                  frozenset({1})              : 1,
+                  frozenset({2})              : 1,
+                  frozenset({3})              : 1,
+                  frozenset({0, 1})           : 2,
+                  frozenset({0, 2})           : 1,
+                  frozenset({0, 3})           : 1,
+                  frozenset({1, 2})           : 1,
+                  frozenset({1, 3})           : 1,
+                  frozenset({2, 3})           : 2,
+                  frozenset({0, 1, 2})        : 1,
+                  frozenset({0, 1, 3})        : 1,
+                  frozenset({0, 2, 3})        : 1,
+                  frozenset({1, 2, 3})        : 1,
+                  frozenset({0, 1, 2, 3})     : 0},
+                 frozenset({0, 1, 2, 3}))
+]
+
+
+def modularCutTest():
+    # Tests that the correct cut is produced from a given basis
+    constructionTest0()
+    constructionTest1()
+    constructionTest2()
+    constructionTest3()
+
+    # Tests that the correct function is produced in an extension
+    extensionTest0()
+    extensionTest1()
+    extensionTest2()
+
+    listCuts(THREE)
+    #for cut in listAllCuts(THREE):
+    #    print(str(len(cut.cut)))
+
+def extensionTest0():
+    E0 = modularCutExtension(cuts[0], THREE)
+    Expected = functions[0]
+
+    assert E0 == Expected, str(E0) + " should be " + str(Expected)
+
+def extensionTest1():
+    E1 = modularCutExtension(cuts[1], THREE)
+    Expected = functions[1]
+
+    assert E1 == Expected, str(E1) + " should be " + str(Expected)
+
+def extensionTest2():
+    E2 = modularCutExtension(cuts[2], THREE)
+    Expected = functions[2]
+
+    assert E2 == Expected, str(E2) + " should be " + str(Expected)
+
+def constructionTest0():
+    Expected = frozenset([frozenset(s) for s in powerset(groundset)])
+    
+    # C0 should be the powerset of the ground set
+    assert cuts[0].cut == Expected, str(cuts[0]) + " should be " + str(Expected)
+
+def constructionTest1():
+    Expected = frozenset([frozenset(sub) for sub in powerset(groundset) if 0 in sub])
+    
+    # C1 should be the subsets of the ground set containing 0
+    assert cuts[1].cut == Expected, str(cuts[1]) + " should be " + str(Expected)
+
+def constructionTest2():
+    Expected = frozenset([frozenset([0]), frozenset([0, 1]), frozenset([0, 2]),
+                          frozenset([0, 1, 2]), frozenset([1]), frozenset([1, 2])])
+
+    # C2 should be the sets containing 0 or 1
+    assert cuts[2].cut == Expected, str(cuts[2]) + " should be " + str(Expected)
+
+def constructionTest3():
+    Expected = frozenset([frozenset([0,1]), frozenset([0,1,2])])
+
+    # C3 should be the set containing {0,1} and the ground
+    assert cuts[3].cut == Expected, str(cuts[3]) + " should be " + str(Expected)
+
+    
+if __name__ == "__main__":
+    modularCutTest()

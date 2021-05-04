@@ -34,7 +34,15 @@ class SetFunction:
         string += "\n"
                 
         return string
-        
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            if len(self.groundset) == len(other.groundset):
+                for sub in self.subsets:
+                    if self.function(sub) != other.function(sub):
+                        return False
+                return True
+
     def function(self, A):
         """Apply the Set Function to the subset A"""
         if not (A <= self.groundset):
@@ -131,21 +139,25 @@ class Connectivity(SetFunction):
 
     def isomorphicTo(self, other):
         """Uses the permutations of the ground set to check isomorphism"""
-        def relabel(perm, sub):
+        def relabel(perm, sub, ground):
             """Relabels the subset according to the permutation given"""
             out = set()
             for e in sub:
+                print(str(e) + "\t" + str(perm[e]))
                 out = out | set([perm[e]])
             return frozenset(out)                
-            
-        perms = permutations(sorted(list(self.groundset)))
-        for perm in perms:
+        
+        ground = sorted(list(self.groundset))
+        perms = permutations(self.groundset)
+        for perm in list(perms):
+            print(str(perm))
             iso = True
             for sub in self.subsets:
-                if self.function(relabel(perm, sub)) != other.function(sub):
+                if self.function(relabel(perm, sub, ground)) != other.function(sub):
                     iso = False
                     break
-            if iso: return True
+            if iso:
+                return True
         return False
         
     def graph(self):
