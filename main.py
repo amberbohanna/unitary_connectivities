@@ -4,20 +4,6 @@ from helper import *
 import time
 
 # Filters out isomorphic structures
-def filterIsomorphic(structures):
-    representatives = [structures[0]]
-    for structure in structures:
-        newRepresentative = True
-        candidate = structure.graph
-        for representative in representatives:
-            rep = representative.graph
-            if nx.is_isomorphic(candidate, rep):
-                newRepresentative = False
-        if newRepresentative:
-            representatives.append(structure)            
-    return representatives
-
-# Filters out isomorphic structures
 def filterIsomorphicConnectivities(structures):
     representatives = [structures[0]]
     for structure in structures:
@@ -37,16 +23,22 @@ if __name__ == "__main__":
     
     for i in range(5):
         print("Unitary functions with |E| = " + str(size + 1 + i) + ".")
-        print("Finding all elision cuts. ", end="")
 
-        timestart = time.perf_counter()
+        print("Finding all cuts. ", end="")
         cuts = []
-        for system in previousgen:
-            cuts += listCuts(system)
-        timestop = time.perf_counter()
-        print("Found " + str(len(cuts)) + " in time " + \
-              str(timestop - timestart) + ".")
+        number = 0
+        for i in range(len(previousgen)):
+            cuts.append(set(listCuts(previousgen[i])))
+            number += len(cuts[i])
+        print("Found " + str(number))
 
+        number = 0
+        for i in range(len(cuts)):
+            cuts[i] = unitaryCuts(connectedCuts(cuts[i]))
+            number += len(cuts[i])
+
+        print("Of the cuts found, " + str(number) + " are elision, unitary, connected")
+        
 #        print("Removing isomorphic pairs of cuts. ", end="")
 #        isopairs = len(cuts)
 #        timestart = time.perf_counter()
@@ -57,15 +49,17 @@ if __name__ == "__main__":
 #              " in time " + str(timestop - timestart) + ".")
         
         print("Finding all extensions. ", end="")
-        timestart = time.perf_counter()
-        for system, cut in product(previousgen, cuts):
-            nextgen.append(modularCutExtension(cut, system))
-        timestop = time.perf_counter()
-        print("Found " + str(len(nextgen)) + " in time " + \
-              str(timestop - timestart))
-
-        print("Filtering out isomorphic connectivities")
+        for i in range(len(previousgen)):
+            for j in range(len(cuts[i])):
+                nextgen.append(modularCutExtension(cuts[i][j], previousgen[i]))
+        print("Found " + str(len(nextgen)))
+        
+        print("Finding non-isomorphic extensions. ", end="")
         nextgen = filterIsomorphicConnectivities(nextgen)
+        print("Found " + str(len(nextgen)))
+
+        for system in nextgen:
+            print(str(system))
         
 #        polys = [Polymatroid.from_conn(system) for system in nextgen]
 #        nextpolys = filterIsomorphicPolymatroids(polys)
@@ -80,8 +74,7 @@ if __name__ == "__main__":
 #        print("Removed " + str(origlen - newlen) + " in time " + \
 #              str(timestop - timestart))
 
-        print(str(len(nextgen)))
-        # print("Printing " + str(len(nextgen)) + \
+# print("Printing " + str(len(nextgen)) + \
         #       " Connectivity Functions:")
         # for system in nextgen:
         #     print(str(system))

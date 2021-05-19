@@ -1,4 +1,6 @@
 from modularcut import *
+from functions import *
+from main import *
 
 groundset = frozenset([0, 1, 2])
 bases = [frozenset([frozenset()]), frozenset([frozenset([0])]), frozenset([frozenset([0]), frozenset([1])]),
@@ -6,6 +8,7 @@ bases = [frozenset([frozenset()]), frozenset([frozenset([0])]), frozenset([froze
 cuts = [ModularCut(bases[0], THREE), ModularCut(bases[1], THREE), ModularCut(bases[2], THREE),
         ModularCut(bases[3], THREE)]
 functions = [
+    # 0
     Connectivity({frozenset()                 : 0,
                   frozenset({0})              : 1,
                   frozenset({1})              : 1,
@@ -23,6 +26,7 @@ functions = [
                   frozenset({1, 2, 3})        : 1,
                   frozenset({0, 1, 2, 3})     : 0},
                  frozenset({0, 1, 2, 3})),
+    # 1
     Connectivity({frozenset()                 : 0,
                   frozenset({0})              : 2,
                   frozenset({1})              : 1,
@@ -40,6 +44,7 @@ functions = [
                   frozenset({1, 2, 3})        : 2,
                   frozenset({0, 1, 2, 3})     : 0},
                  frozenset({0, 1, 2, 3})),
+    # 2
     Connectivity({frozenset()                 : 0,
                   frozenset({0})              : 1,
                   frozenset({1})              : 1,
@@ -50,6 +55,60 @@ functions = [
                   frozenset({0, 3})           : 1,
                   frozenset({1, 2})           : 1,
                   frozenset({1, 3})           : 1,
+                  frozenset({2, 3})           : 2,
+                  frozenset({0, 1, 2})        : 1,
+                  frozenset({0, 1, 3})        : 1,
+                  frozenset({0, 2, 3})        : 1,
+                  frozenset({1, 2, 3})        : 1,
+                  frozenset({0, 1, 2, 3})     : 0},
+                 frozenset({0, 1, 2, 3})),
+    # 3
+    Connectivity({frozenset()                 : 0,
+                  frozenset({0})              : 1,
+                  frozenset({1})              : 1,
+                  frozenset({2})              : 1,
+                  frozenset({3})              : 1,
+                  frozenset({0, 1})           : 1,
+                  frozenset({0, 2})           : 2,
+                  frozenset({0, 3})           : 1,
+                  frozenset({1, 2})           : 1,
+                  frozenset({1, 3})           : 2,
+                  frozenset({2, 3})           : 1,
+                  frozenset({0, 1, 2})        : 1,
+                  frozenset({0, 1, 3})        : 1,
+                  frozenset({0, 2, 3})        : 1,
+                  frozenset({1, 2, 3})        : 1,
+                  frozenset({0, 1, 2, 3})     : 0},
+                 frozenset({0, 1, 2, 3})),
+    # 4
+    Connectivity({frozenset()                 : 0,
+                  frozenset({0})              : 1,
+                  frozenset({1})              : 1,
+                  frozenset({2})              : 1,
+                  frozenset({3})              : 1,
+                  frozenset({0, 1})           : 1,
+                  frozenset({0, 2})           : 1,
+                  frozenset({0, 3})           : 2,
+                  frozenset({1, 2})           : 2,
+                  frozenset({1, 3})           : 1,
+                  frozenset({2, 3})           : 1,
+                  frozenset({0, 1, 2})        : 1,
+                  frozenset({0, 1, 3})        : 1,
+                  frozenset({0, 2, 3})        : 1,
+                  frozenset({1, 2, 3})        : 1,
+                  frozenset({0, 1, 2, 3})     : 0},
+                 frozenset({0, 1, 2, 3})),
+    # 5
+    Connectivity({frozenset()                 : 0,
+                  frozenset({0})              : 1,
+                  frozenset({1})              : 1,
+                  frozenset({2})              : 1,
+                  frozenset({3})              : 1,
+                  frozenset({0, 1})           : 2,
+                  frozenset({0, 2})           : 2,
+                  frozenset({0, 3})           : 1,
+                  frozenset({1, 2})           : 1,
+                  frozenset({1, 3})           : 2,
                   frozenset({2, 3})           : 2,
                   frozenset({0, 1, 2})        : 1,
                   frozenset({0, 1, 3})        : 1,
@@ -72,9 +131,34 @@ def modularCutTest():
     extensionTest1()
     extensionTest2()
 
-    listCuts(THREE)
-    #for cut in listAllCuts(THREE):
-    #    print(str(len(cut.cut)))
+    # Tests the isomorphism checking
+    isoTest0()
+    isoTest1()
+    isoTest2()
+    isoTest3()
+
+    # Tests the isomorphism filtering
+    isoFilterTest0()
+
+def isoFilterTest0():
+    for fun in filterIsomorphicConnectivities(functions):
+        print(str(fun))
+
+def isoTest0():
+    assert functions[2].isomorphicTo(functions[3]), str(functions[2]) + " should be isomorphic to " \
+        + str(functions[3])
+
+def isoTest1():
+    assert functions[3].isomorphicTo(functions[4]), str(functions[3]) + " should be isomorphic to " \
+        + str(functions[4])
+
+def isoTest2():
+    assert not (functions[4].isomorphicTo(functions[5])), str(functions[4]) + " should not be isomorphic to " \
+                + str(functions[5])
+
+def isoTest3():
+    assert not (functions[0].isomorphicTo(functions[3])), str(functions[0]) + " should not be isomorphic to " \
+        + str(functions[3])
 
 def extensionTest0():
     E0 = modularCutExtension(cuts[0], THREE)

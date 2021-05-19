@@ -1,6 +1,7 @@
-from itertools import combinations, product, permutations
+from itertools import combinations, product, permutations, chain
 from helper import powerset
 import networkx as nx
+import itertools as it
 import matplotlib.pyplot as plt
 
 # Class definitions for SetFunction, Connectivity, Polymatroid
@@ -47,7 +48,7 @@ class SetFunction:
         """Apply the Set Function to the subset A"""
         if not (A <= self.groundset):
             raise Exception(str(A) + " isn't in " + str(self.groundset))
-        return self.mapping[frozenset(A)]
+        return self.mapping[A]
 
     def isNormal(self):
         """True if the function is Normal"""
@@ -139,21 +140,19 @@ class Connectivity(SetFunction):
 
     def isomorphicTo(self, other):
         """Uses the permutations of the ground set to check isomorphism"""
-        def relabel(perm, sub, ground):
+        def relabel(perm, sub):
             """Relabels the subset according to the permutation given"""
-            out = set()
+            out = frozenset()
             for e in sub:
-                print(str(e) + "\t" + str(perm[e]))
                 out = out | set([perm[e]])
-            return frozenset(out)                
+            return out
         
         ground = sorted(list(self.groundset))
-        perms = permutations(self.groundset)
-        for perm in list(perms):
-            print(str(perm))
+        perms = list(permutations(ground))
+        for perm in perms:
             iso = True
             for sub in self.subsets:
-                if self.function(relabel(perm, sub, ground)) != other.function(sub):
+                if self.function(relabel(perm, sub)) != other.function(sub):
                     iso = False
                     break
             if iso:

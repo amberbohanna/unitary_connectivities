@@ -18,7 +18,15 @@ class ModularCut:
 
     def __str__(self):
         return str(self.cut)
-        
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.subsets == other.subsets
+        return False
+
+    def __hash__(self):
+        return hash(self.cut)
+    
     def populateCut(self):
         def iterate(basis):
             cut = basis
@@ -50,17 +58,14 @@ class ModularCut:
         return True
 
     def isUnitary(self):
-        if set() in self.cut:
-            return False
-
         for e in self.groundset:
-            if not (set([e]) in self.cut):
+            if not ((self.groundset - frozenset([e])) in self.cut):
                 return False
 
         return True
 
     def isConnected(self):
-        return not (set() in self.cut)
+        return not (frozenset() in self.cut)
     
     def cutGraph(self):
 #        G = self.connectivity.inclusionGraph.copy()
@@ -99,7 +104,7 @@ def modularCutExtension(modcut, connectivity):
                 oldmapping[frozenset(s)] + 1
             
         if (connectivity.groundset - s) in modcut.cut:
-            newmapping[frozenset(s)] = oldmapping[s]
+            newmapping[frozenset(s)] = oldmapping[s] 
         else:
             newmapping[frozenset(s)] = oldmapping[s] + 1
 
@@ -140,7 +145,6 @@ def listCuts(connectivity):
     """Returns a list of all modular cuts that are nonempty"""
     families = [frozenset(s) for s in powerset(connectivity.subsets)]
     cuts = [ModularCut(family, connectivity) for family in families]
-    return elisionCuts(unitaryCuts(connectedCuts(cuts)))
     return cuts
 
 def elisionCuts(cutList):
